@@ -4,6 +4,7 @@
 import pywapi
 import pprint
 import pygame
+from pygame.locals import *
 import string
 import os
 import time
@@ -11,7 +12,7 @@ import datetime
 from prayertimes import PrayTimes
 # -*- coding: utf-8 -*-
  
-installPath = "/home/pi/Documents/prayerwall/weather logos/net.jacotronix.python.PiTFTWeather-master/PiTFTWeather/"
+installPath = "/home/pi/Documents/prayerwall/weather/net.jacotronix.python.PiTFTWeather-master/PiTFTWeather/"
  
 # convert mph = kpd / kphToMph
 kphToMph = 1.60934400061
@@ -20,7 +21,7 @@ from umalqurra.hijri_date import HijriDate
 #Get Prayer Times
 #--------------------
 lat = 50.784342#9.327531
-long =12.931938# 8.086139
+longi =12.931938# 8.086139
  
 class pitft :
     screen = None;
@@ -29,12 +30,34 @@ class pitft :
     def __init__(self):
         "Ininitializes a new pygame screen using the framebuffer"
         # Based on "Python GUI in Linux frame buffer" http://www.karoltomala.com/blog/?p=679
+        '''
         disp_no = os.getenv("DISPLAY")
+        print 'disp is ={0}'.format(disp_no)
         if disp_no:
-            print "I'm running under X display = {}".format(disp_no)
-        os.putenv('SDL_FBDEV', '/dev/fb0')
-         
+	    print 'Im running under X display={}'.format(disp_no)
+	os.putenv('SDL_FBDEV', '/dev/fb0')
+	 
         # Select frame buffer driver Make sure that SDL_VIDEODRIVER is set
+        found = False
+        
+        drivers = ['directfb', 'fbcon', 'svgalib','x11']
+		
+	for driver in drivers:
+		if not os.getenv('SDL_VIDEODRIVER'):
+		    os.putenv('SDL_VIDEODRIVER', driver)
+		try:
+		    pygame.init()
+		except pygame.error:
+		    print 'Driver: {0} failed.'.format(driver)
+	    	continue
+		    found = True
+				
+		break
+
+		if not found:
+		raise Exception('No suitable video driver found!')
+				
+        
         driver = 'fbcon'
         if not os.getenv('SDL_VIDEODRIVER'):
             os.putenv('SDL_VIDEODRIVER', driver)
@@ -43,7 +66,8 @@ class pitft :
         except pygame.error:
             print 'Driver: {0} failed.'.format(driver)
             exit(0)
-         
+        '''
+        pygame.init()
         size = (pygame.display.Info().current_w, pygame.display.Info().current_h)
         self.screen = pygame.display.set_mode(size, pygame.FULLSCREEN)
         # Clear the screen to start
@@ -54,11 +78,11 @@ class pitft :
         pygame.display.update()
     def __del__(self):
         "Destructor to make sure pygame shuts down, etc."
- 
+    
          
 # Create an instance of the PyScope class
 mytft = pitft() 
-pygame.mouse.set_visible(False)
+pygame.mouse.set_visible(True)
 # set up the fonts choose the font
 fontpath = pygame.font.match_font('arial')
 # set up 2 sizes
@@ -82,8 +106,26 @@ updateRate = 600 # seconds
  
 weatherDotComLocationCode = 'GMXX0016'#'KUXX1118'
 # -*- coding: utf-8 -*-
- 
-while True:
+'''
+def keypressed(inputKey)
+        keyspressed = key.get_pressed()
+        if keysPressed[inputKey]:
+            return True
+        else:
+            return False
+ '''
+
+running =False
+while not running:
+    
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            running= True
+        if event.type is KEYDOWN and e.key==K_w:
+            pygame.display.set_mode(size)
+        if event.type is KEYDOWN and e.key==K_f:
+            pygame.display.set_mode(size,FULLSCREEN)
+        
     weather_com_result = pywapi.get_weather_from_weather_com(weatherDotComLocationCode)
       
     today = weather_com_result['forecasts'][0]['day_of_week'][0:3] + " " \
@@ -129,7 +171,7 @@ while True:
     Islamicyear=str(int(um.year))
  
     PT = PrayTimes('Makkah')
-    times = PT.getTimes((now.year,now.month,now.day), (lat, long), 3,0)
+    times = PT.getTimes((now.year,now.month,now.day), (lat, longi), 3,0)
     try:
         currTemp = weather_com_result['current_conditions']['temperature'] + u'\N{DEGREE SIGN}' + "C"
     except KeyError:
@@ -245,9 +287,13 @@ while True:
     textAnchorY+=textYoffset
     text_surface = fontLg.render("Isha", True, colourWhite)
     mytft.screen.blit(text_surface, (textAnchorX, textAnchorY))
-
+    
+    
+            
 
     pygame.display.update()
              
     # Wait
     time.sleep(updateRate)
+pygame.quit()
+sys.exit()
